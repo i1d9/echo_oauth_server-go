@@ -3,40 +3,61 @@ package main
 import (
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-// TemplateRenderer is a custom html/template renderer for Echo framework
-type TemplateRenderer struct {
+// Template structure to implement Render interface
+type Template struct {
 	templates *template.Template
 }
 
-// Render renders a template document
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-
-	// Add global methods if data is a map
-	if viewContext, isMap := data.(map[string]interface{}); isMap {
-		viewContext["reverse"] = c.Echo().Reverse
-	}
-
+// Render method for Template struct
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
 func main() {
+	// Initialize Echo
 	e := echo.New()
-	renderer := &TemplateRenderer{
-		templates: template.Must(template.ParseGlob("*.html")),
+
+	// Load templates
+	t := &Template{
+		templates: template.Must(template.ParseGlob("templates/*.html")),
 	}
-	e.Renderer = renderer
+	e.Renderer = t
 
-	// Named route "foobar"
-	e.GET("/something", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "templates/index/index.html", map[string]interface{}{
-			"name": "Dolly!",
-		})
-	}).Name = "foobar"
+	// Routes
+	e.GET("/", func(c echo.Context) error {
+		data := map[string]interface{}{
+			"title": "Home Page",
+			"message": "Welcome to the Echo Framework!",
+		}
+		return c.Render(http.StatusOK, "index.html", data)
+	})
 
-	e.Logger.Fatal(e.Start(":8000"))
+
+	
+	e.GET("/login", func(c echo.Context) error {
+		data := map[string]interface{}{
+			"title": "About Page",
+			"message": "This is the about page.",
+		}
+		return c.Render(http.StatusOK, "about.html", data)
+	})
+
+
+	e.GET("/register", func(c echo.Context) error {
+		data := map[string]interface{}{
+			"title": "About Page",
+			"message": "This is the about page.",
+		}
+		return c.Render(http.StatusOK, "about.html", data)
+	})
+
+
+	// Start the server
+	log.Fatal(e.Start(":8080"))
 }
